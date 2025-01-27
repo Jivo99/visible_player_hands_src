@@ -5305,6 +5305,11 @@ void idPhysics_Player::ToggleLean(float leanYawAngleDegrees)
 
 		m_b_leanFinished = false;
 
+		if (leanYawAngleDegrees == 180.0)
+			cv_tdm_leaning_left.SetBool(1);
+		if (leanYawAngleDegrees == 0.0)
+			cv_tdm_leaning_right.SetBool(1);
+
 		DM_LOG(LC_MOVEMENT, LT_DEBUG)LOGSTRING("ToggleLean starting lean\r");
 	}
 }
@@ -5328,6 +5333,11 @@ void idPhysics_Player::UnLean(float leanYawAngleDegrees)
 	m_leanMoveEndTilt = 0.0;
 	m_b_leanFinished = false;
 	m_leanTime = cv_pm_lean_time_to_unlean.GetFloat();
+
+	if (leanYawAngleDegrees == 180.0)
+		cv_tdm_leaning_left.SetBool(0);
+	if (leanYawAngleDegrees == 0.0)
+		cv_tdm_leaning_right.SetBool(0);
 
 	// greebo: Leave the rest of the variables as they are
 	// to avoid view-jumping issues due to leaning back.
@@ -5459,6 +5469,8 @@ void idPhysics_Player::UpdateLeanAngle (float deltaLeanTiltDegrees)
 							if ( FindLeanListenPos(trTest.c.point) ) // grayman #4882
 							{
 								m_LeanEnt = door;
+
+								cv_tdm_lean_listenable.SetBool(1);
 							}
 						}
 					}
@@ -5544,8 +5556,14 @@ void idPhysics_Player::UpdateLeanAngle (float deltaLeanTiltDegrees)
 			}
 		}
 
+		cv_tdm_lean_percentage.SetFloat((m_CurrentLeanTiltDegrees / m_leanMoveMaxAngle) * 100);
+		cv_tdm_lean_collided.SetBool(1);
+
 		return;
 	}
+
+	cv_tdm_lean_percentage.SetFloat((m_CurrentLeanTiltDegrees / m_leanMoveMaxAngle) * 100);
+	cv_tdm_lean_collided.SetBool(0);
 
 	// Adjust lean angle by delta which was allowed
 	m_CurrentLeanTiltDegrees += deltaLeanTiltDegrees;
@@ -5633,6 +5651,8 @@ void idPhysics_Player::LeanMove()
 	{
 		DM_LOG(LC_MOVEMENT,LT_DEBUG)LOGSTRING("Leaned player clipped solid, unleaning to valid position \r");
 		UnleanToValidPosition();
+
+		cv_tdm_lean_collided.SetBool(1);
 	}
 
 	// Lean door test
@@ -5946,6 +5966,9 @@ void idPhysics_Player::UpdateLean( void ) // grayman #4882 - expanded to handle 
 			if ( !m_LeanEnt.IsValid() || door->IsOpen() || !IsLeaning() )
 			{
 				m_LeanEnt = NULL;
+
+				cv_tdm_lean_listenable.SetBool(0);
+
 				return;
 			}
 
@@ -5980,6 +6003,9 @@ void idPhysics_Player::UpdateLean( void ) // grayman #4882 - expanded to handle 
 			if ( !TestBounds.IntersectsBounds(door->GetPhysics()->GetAbsBounds()) )
 			{
 				m_LeanEnt = NULL;
+
+				cv_tdm_lean_listenable.SetBool(0);
+
 				return;
 			}
 

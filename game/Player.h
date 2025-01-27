@@ -416,6 +416,7 @@ public:
 	int						m_LeanButtonTimeStamp;
 
 	idEntityPtr<idWeapon>	weapon;
+	idEntityPtr<idWeapon>	visible_hands;
 	idUserInterface *		hud;				// MP: is NULL if not local player
 
 	// greebo: This is true if the inventory HUD needs a refresh

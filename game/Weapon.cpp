@@ -199,6 +199,16 @@ void idWeapon::SetOwner( idPlayer *_owner ) {
 	}
 }
 
+void idWeapon::SetOwnerVisibleHands(idPlayer* _owner) {
+	assert(!owner);
+	owner = _owner;
+	SetName("player1_visible_hands");
+
+	if (worldModel.GetEntity()) {
+		worldModel.GetEntity()->SetName("player1_visible_hands_worldmodel");
+	}
+}
+
 /*
 ================
 idWeapon::ShouldConstructScriptObjectAtSpawn
@@ -741,7 +751,7 @@ void idWeapon::Clear( void ) {
 	m_animRates.ClearFree();
 
 	// clear attack flags on the player
-	if( owner )
+	if (owner && GetName() != "player1_visible_hands")
 	{
 		owner->SetAttackFlag(COMBAT_MELEE, false);
 		owner->SetAttackFlag(COMBAT_RANGED, false);
@@ -1073,7 +1083,10 @@ void idWeapon::GetWeaponDef( const char *objectname, int ammoinclip ) {
 	}
 	
 	// spawn any weapon attachments we might have
-	const idKeyValue *KeyVal = weaponDef->dict.MatchPrefix( "def_attach", NULL );
+	const idKeyValue* KeyVal =
+		(strcmp(objectname, "atdm:weapon_unarmed") != 0 || strcmp(name, "player1_visible_hands") == 0)
+		? weaponDef->dict.MatchPrefix("def_attach", NULL)
+		: NULL;
 	idEntity *ent(NULL);
 
 	while ( KeyVal ) 
