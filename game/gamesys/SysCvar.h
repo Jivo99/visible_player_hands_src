@@ -706,6 +706,13 @@ extern const char *si_gameTypeArgs[];
 
 extern const char *ui_skinArgs[];
 
+/*** Visible Player Hands Mod ***/
+extern idCVar cv_tdm_leaning_left;
+extern idCVar cv_tdm_leaning_right;
+extern idCVar cv_tdm_lean_collided;
+extern idCVar cv_tdm_lean_listenable;
+extern idCVar cv_tdm_lean_percentage;
+extern idCVar cv_tdm_lean_stats_hud;
 
 #ifdef MOD_WATERPHYSICS
 

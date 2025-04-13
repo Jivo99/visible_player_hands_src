@@ -536,6 +536,7 @@ idPlayer::idPlayer() :
 	hasLanded				= false;
 
 	weapon					= NULL;
+	visible_hands			= NULL;
 
 	hud						= NULL;
 	inventoryHUDNeedsUpdate = true;
@@ -804,12 +805,17 @@ void idPlayer::SetupWeaponEntity()
 	if ( weapon.GetEntity() ) {
 		// get rid of old weapon
 		weapon.GetEntity()->Clear();
+		visible_hands.GetEntity()->Clear();
 		currentWeapon = -1;
 	}
 	else 
 	{
 		weapon = static_cast<idWeapon *>( gameLocal.SpawnEntityType( idWeapon::Type, NULL ) );
 		weapon.GetEntity()->SetOwner( this );
+
+		visible_hands = static_cast<idWeapon*>(gameLocal.SpawnEntityType(idWeapon::Type, NULL));
+		visible_hands.GetEntity()->SetOwnerVisibleHands(this);
+
 		currentWeapon = -1;
 	}
 
@@ -2097,7 +2103,9 @@ Release any resources used by the player.
 idPlayer::~idPlayer()
 {
 	delete weapon.GetEntity();
+	delete visible_hands.GetEntity();
 	weapon = NULL;
+	visible_hands = NULL;
 }
 
 /*
@@ -2142,6 +2150,7 @@ void idPlayer::Save( idSaveGame *savefile ) const {
 	// idBoolFields don't need to be saved, just re-linked in Restore
 
 	weapon.Save( savefile );
+	visible_hands.Save(savefile);
 
 	savefile->WriteUserInterface( hud, false );
 	savefile->WriteBool(inventoryHUDNeedsUpdate);
@@ -2472,6 +2481,7 @@ void idPlayer::Restore( idRestoreGame *savefile ) {
 	LinkScriptVariables();
 
 	weapon.Restore( savefile );
+	visible_hands.Restore( savefile );
 
 	savefile->ReadUserInterface( hud );
 	savefile->ReadBool(inventoryHUDNeedsUpdate);
@@ -3376,6 +3386,43 @@ void idPlayer::DrawHUD(idUserInterface *_hud)
 		);
 	}
 
+	// Show lean stats on HUD (Visible Player Hands mod)
+	if (cv_tdm_lean_stats_hud.GetBool())
+	{
+		idStr viewposTextLR;
+		idStr viewposTextColl;
+		idStr viewposTextPercent;
+
+		sprintf(
+			viewposTextLR, "Left: %d   Right: %d",
+			cv_tdm_leaning_left.GetInteger(), cv_tdm_leaning_right.GetInteger()
+		);
+		sprintf(
+			viewposTextColl, "Collided: %d   Listenable: %d",
+			cv_tdm_lean_collided.GetInteger(), cv_tdm_lean_listenable.GetInteger()
+		);
+		sprintf(
+			viewposTextPercent, "Percentage: %d%%",
+			(int)cv_tdm_lean_percentage.GetFloat()
+		);
+
+		renderSystem->DrawSmallStringExt(
+			1, 1, viewposTextLR.c_str(),
+			idStr::ColorForIndex(C_COLOR_CYAN), false,
+			declManager->FindMaterial("textures/consolefont_24")
+		);
+		renderSystem->DrawSmallStringExt(
+			1, 21, viewposTextColl.c_str(),
+			idStr::ColorForIndex(C_COLOR_CYAN), false,
+			declManager->FindMaterial("textures/consolefont_24")
+		);
+		renderSystem->DrawSmallStringExt(
+			1, 41, viewposTextPercent.c_str(),
+			idStr::ColorForIndex(C_COLOR_CYAN), false,
+			declManager->FindMaterial("textures/consolefont_24")
+		);
+	}
+
 	// weapon targeting crosshair
 #if 0 // greebo: disabled cursor calls entirely
 	if ( !GuiActive() ) {
@@ -3417,6 +3464,10 @@ void idPlayer::EnterCinematic( void ) {
 
 	if ( weaponEnabled && weapon.GetEntity() ) {
 		weapon.GetEntity()->EnterCinematic();
+	}
+
+	if (visible_hands.GetEntity()) {
+		visible_hands.GetEntity()->EnterCinematic();
 	}
 
 	AI_FORWARD		= false;
@@ -3461,6 +3512,10 @@ void idPlayer::ExitCinematic( void ) {
 
 	if ( weaponEnabled && weapon.GetEntity() ) {
 		weapon.GetEntity()->ExitCinematic();
+	}
+
+	if (visible_hands.GetEntity()) {
+		visible_hands.GetEntity()->ExitCinematic();
 	}
 
 	SetState( "ExitCinematic" );
@@ -4183,6 +4238,7 @@ void idPlayer::Weapon_Combat( void ) {
 	}
 
 	weapon.GetEntity()->RaiseWeapon();
+	visible_hands.GetEntity()->RaiseWeapon();
 	if ( weapon.GetEntity()->IsReloading() ) {
 		if ( !AI_RELOAD ) {
 			AI_RELOAD = true;
@@ -4420,6 +4476,7 @@ void idPlayer::Weapon_GUI( void )
 
 	StopFiring();
 	weapon.GetEntity()->LowerWeapon();
+	visible_hands.GetEntity()->LowerWeapon();
 
 	// disable click prediction for the GUIs. handy to check the state sync does the right thing
 	if ( ( oldButtons ^ usercmd.buttons ) & BUTTON_ATTACK )
@@ -4478,6 +4535,11 @@ void idPlayer::UpdateWeapon( void ) {
 		}
 	}
 
+	if (!visible_hands.GetEntity()->IsLinked()) {
+		animPrefix = spawnArgs.GetString("def_weapon0");
+		visible_hands.GetEntity()->GetWeaponDef(animPrefix, 0);
+	}
+
 	if ( g_dragEntity.GetBool() ) {
 		StopFiring();
 		weapon.GetEntity()->LowerWeapon();
@@ -4499,6 +4561,7 @@ void idPlayer::UpdateWeapon( void ) {
 	{
 		StopFiring();
 		weapon.GetEntity()->LowerWeapon();
+		visible_hands.GetEntity()->LowerWeapon();
 	}
 	
 	if ( hiddenWeapon ) {
@@ -4506,7 +4569,14 @@ void idPlayer::UpdateWeapon( void ) {
 	}
 
 	// update weapon state, particles, dlights, etc
-	weapon.GetEntity()->PresentWeapon( showWeaponViewModel );
+	//weapon.GetEntity()->PresentWeapon(showWeaponViewModel);
+	if (currentWeapon != 0) {
+		weapon.GetEntity()->PresentWeapon(showWeaponViewModel);
+	}
+	else {
+		weapon.GetEntity()->Hide();
+	}
+	visible_hands.GetEntity()->PresentWeapon(showWeaponViewModel);
 }
 
 void idPlayer::ChangeWeaponProjectile(const idStr& weaponName, const idStr& projectileDefName)
@@ -7585,6 +7655,10 @@ void idPlayer::Think( void )
 		weapon.GetEntity()->SetPushVelocity( physicsObj.GetPushedLinearVelocity() );
 	}
 
+	if (visible_hands.GetEntity()) {
+		visible_hands.GetEntity()->SetPushVelocity(physicsObj.GetPushedLinearVelocity());
+	}
+
 	EvaluateControls();
 
 	EvaluateCrouch();
@@ -7885,6 +7959,7 @@ void idPlayer::Killed( idEntity *inflictor, idEntity *attacker, int damage, cons
 	{
 		// greebo: Still call the ownerdied method to cleanup the weapon script state
 		weapon.GetEntity()->OwnerDied();
+		visible_hands.GetEntity()->OwnerDied();
 
 		// Run the death event in a few seconds
 		PostEventMS(&EV_Player_CustomDeath, SEC2MS(gameLocal.world->spawnArgs.GetInt("custom_death_delay")));
@@ -7927,6 +8002,7 @@ void idPlayer::Killed( idEntity *inflictor, idEntity *attacker, int damage, cons
 
 	// get rid of weapon
 	weapon.GetEntity()->OwnerDied();
+	visible_hands.GetEntity()->OwnerDied();
 
 	// drop the weapon as an item
 	DropWeapon( true );
@@ -8386,6 +8462,7 @@ idAngles idPlayer::GunTurningOffset( void ) {
 	float weaponAngleOffsetScale, weaponAngleOffsetMax;
 
 	weapon.GetEntity()->GetWeaponAngleOffsets( &weaponAngleOffsetAverages, &weaponAngleOffsetScale, &weaponAngleOffsetMax );
+	visible_hands.GetEntity()->GetWeaponAngleOffsets(&weaponAngleOffsetAverages, &weaponAngleOffsetScale, &weaponAngleOffsetMax);
 
 	av = current;
 
@@ -8433,6 +8510,7 @@ idVec3	idPlayer::GunAcceleratingOffset( void ) {
 	ofs.Zero();
 
 	weapon.GetEntity()->GetWeaponTimeOffsets( &weaponOffsetTime, &weaponOffsetScale );
+	visible_hands.GetEntity()->GetWeaponTimeOffsets(&weaponOffsetTime, &weaponOffsetScale);
 
 	int stop = currentLoggedAccel - NUM_LOGGED_ACCELS;
 	if ( stop < 0 ) {
@@ -9543,6 +9621,8 @@ void idPlayer::WriteToSnapshot( idBitMsgDelta &msg ) const {
 	msg.WriteBits( idealWeapon, idMath::BitsForInteger( 256 ) );
 	msg.WriteBits( weapon.GetEntityNum(), 32 );
 	msg.WriteBits( weapon.GetSpawnNum(), 32 );
+	msg.WriteBits(visible_hands.GetEntityNum(), 32);
+	msg.WriteBits(visible_hands.GetSpawnNum(), 32);
 	msg.WriteBits( lastHitToggle, 1 );
 	msg.WriteBits( weaponGone, 1 );
 	msg.WriteBits( isLagged, 1 );
@@ -9578,6 +9658,8 @@ void idPlayer::ReadFromSnapshot( const idBitMsgDelta &msg ) {
 	newIdealWeapon = msg.ReadBits( idMath::BitsForInteger( 256 ) );
 	int weaponEntityId = msg.ReadBits( 32 );
 	int weaponSpawnId = msg.ReadBits( 32 );
+	int visibleHandsEntityId = msg.ReadBits(32);
+	int visibleHandsSpawnId = msg.ReadBits(32);
 	newHitToggle = msg.ReadBits( 1 ) != 0;
 	weaponGone = msg.ReadBits( 1 ) != 0;
 	isLagged = msg.ReadBits( 1 ) != 0;
@@ -9591,6 +9673,12 @@ void idPlayer::ReadFromSnapshot( const idBitMsgDelta &msg ) {
 			weapon.GetEntity()->SetOwner( this );
 		}
 		currentWeapon = -1;
+	}
+
+	if (visible_hands.SetDirectlyWithIntegers(visibleHandsEntityId, visibleHandsSpawnId)) {
+		if (visible_hands.GetEntity()) {
+			visible_hands.GetEntity()->SetOwner(this);
+		}
 	}
 
 	if ( oldHealth > 0 && health <= 0 ) {
@@ -9614,6 +9702,9 @@ void idPlayer::ReadFromSnapshot( const idBitMsgDelta &msg ) {
 		}
 		if ( weapon.GetEntity() ) {
 			weapon.GetEntity()->OwnerDied();
+		}
+		if (visible_hands.GetEntity()) {
+			visible_hands.GetEntity()->OwnerDied();
 		}
 	} else if ( oldHealth <= 0 && health > 0 ) {
 		// respawn

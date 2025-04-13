@@ -969,6 +969,14 @@ idCVar net_serverDlBaseURL(			"net_serverDlBaseURL",		"",				CVAR_GAME | CVAR_AR
 
 idCVar net_serverDlTable(			"net_serverDlTable",		"",				CVAR_GAME | CVAR_ARCHIVE, "pak names for which download is provided, seperated by ;" );
 
+/*** Visible Player Hands Mod ***/
+idCVar cv_tdm_leaning_left("tdm_leaning_left", "0", CVAR_GAME | CVAR_BOOL, "1 if leaning left, 0 otherwise.");
+idCVar cv_tdm_leaning_right("tdm_leaning_right", "0", CVAR_GAME | CVAR_BOOL, "1 if leaning right, 0 otherwise.");
+idCVar cv_tdm_lean_collided("tdm_lean_collided", "0", CVAR_GAME | CVAR_BOOL, "1 if lean collided with object, 0 otherwise.");
+idCVar cv_tdm_lean_listenable("tdm_lean_listenable", "0", CVAR_GAME | CVAR_BOOL, "1 if collided object is listenable, 0 otherwise.");
+idCVar cv_tdm_lean_percentage("tdm_lean_percentage", "0", CVAR_GAME | CVAR_FLOAT, "Current lean percentage.");
+idCVar cv_tdm_lean_stats_hud("tdm_lean_stats_hud", "0", CVAR_GAME | CVAR_ARCHIVE | CVAR_BOOL, "Shows lean variables on HUD if set to 1.");
+
 //----------------------------------
 
 #ifndef __linux__

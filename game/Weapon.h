@@ -51,6 +51,7 @@ public:
 	// Init
 	void					Spawn( void );
 	void					SetOwner( idPlayer *owner );
+	void					SetOwnerVisibleHands(idPlayer* owner);
 	idPlayer*				GetOwner( void );
 	virtual bool			ShouldConstructScriptObjectAtSpawn( void ) const override;
 
