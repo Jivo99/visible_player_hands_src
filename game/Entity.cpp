@@ -12053,6 +12053,9 @@ int idEntity::heal(const char* healDefName, float healScale) {
 			player->GiveHealthPool(healAmount);
 			// Set the parameters of the health pool
 			player->setHealthPoolTimeInterval(healInterval, healIntervalFactor, healStepAmount);
+
+			// the unarmed script is responsible for setting cv_tdm_item_used back to 0
+			cv_tdm_item_used.SetInteger(1);
 		}
 		return 1;
 	}

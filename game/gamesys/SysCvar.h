@@ -713,6 +713,8 @@ extern idCVar cv_tdm_lean_collided;
 extern idCVar cv_tdm_lean_listenable;
 extern idCVar cv_tdm_lean_percentage;
 extern idCVar cv_tdm_lean_stats_hud;
+extern idCVar cv_tdm_item_used;
+extern idCVar cv_tdm_lockpicking;
 
 #ifdef MOD_WATERPHYSICS
 

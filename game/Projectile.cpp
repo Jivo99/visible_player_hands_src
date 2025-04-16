@@ -2069,6 +2069,8 @@ void idProjectile::Event_ClearPlayerImmobilization(idEntity* player)
 	// Release the immobilization imposed on the player by Lockpicking
 	static_cast<idPlayer*>(player)->SetImmobilization("Lockpicking", 0);
 
+	cv_tdm_lockpicking.SetBool(0);
+
 	// stgatilov #4968: stop lockpicking if player's frob is broken
 	// note: release does not look at lockpick type, so we pass garbage
 	m_Lock->ProcessLockpickImpulse(EReleased, '-');

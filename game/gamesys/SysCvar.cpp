@@ -976,6 +976,8 @@ idCVar cv_tdm_lean_collided("tdm_lean_collided", "0", CVAR_GAME | CVAR_BOOL, "1 
 idCVar cv_tdm_lean_listenable("tdm_lean_listenable", "0", CVAR_GAME | CVAR_BOOL, "1 if collided object is listenable, 0 otherwise.");
 idCVar cv_tdm_lean_percentage("tdm_lean_percentage", "0", CVAR_GAME | CVAR_FLOAT, "Current lean percentage.");
 idCVar cv_tdm_lean_stats_hud("tdm_lean_stats_hud", "0", CVAR_GAME | CVAR_ARCHIVE | CVAR_BOOL, "Shows lean variables on HUD if set to 1.");
+idCVar cv_tdm_item_used("tdm_item_used", "0", CVAR_GAME | CVAR_INTEGER, "0: none, 1: health potion, 2: breath potion, 3: holy water, 4: flashbomb, 5: mine, 6: flashmine, 7: snakepick, 8: tripick");
+idCVar cv_tdm_lockpicking("tdm_lockpicking", "0", CVAR_GAME | CVAR_BOOL, "1 if lockpicking, 0 otherwise.");
 
 //----------------------------------
 

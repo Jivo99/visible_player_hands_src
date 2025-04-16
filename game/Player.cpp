@@ -4560,8 +4560,11 @@ void idPlayer::UpdateWeapon( void ) {
 	if( GetImmobilization() & EIM_ATTACK )
 	{
 		StopFiring();
+
 		weapon.GetEntity()->LowerWeapon();
-		visible_hands.GetEntity()->LowerWeapon();
+		if (!cv_tdm_lockpicking.GetBool()) {
+			visible_hands.GetEntity()->LowerWeapon();
+		}
 	}
 	
 	if ( hiddenWeapon ) {
@@ -10383,12 +10386,33 @@ bool idPlayer::UseInventoryItem(EImpulseState impulseState, const CInventoryItem
 
 	idThread* thread = NULL;
 
+	const char* item_used = ent->GetEntityDefName();
+
 	if (impulseState == EPressed)
 	{
+		// the unarmed script is responsible for setting cv_tdm_item_used back to 0
+		// health potion is handled in heal() function in Entity.cpp, since it can only be used if the player is damaged
+		if (strcmp(item_used, "atdm:playertools_breath_potion") == 0) {
+			cv_tdm_item_used.SetInteger(2);
+		}
+		else if (strcmp(item_used, "atdm:playertools_holywater") == 0) {
+			cv_tdm_item_used.SetInteger(3);
+		}
+
 		thread = ent->CallScriptFunctionArgs("inventoryUse", true, 0, "eeed", ent, this, highlightedEntity, impulseState);
 	}
 	else if (impulseState == EReleased)
 	{
+		if (strcmp(item_used, "atdm:playertools_flashbomb") == 0) {
+			cv_tdm_item_used.SetInteger(4);
+		}
+		else if (strcmp(item_used, "atdm:playertools_mine") == 0) {
+			cv_tdm_item_used.SetInteger(5);
+		}
+		else if (strcmp(item_used, "atdm:playertools_flashmine") == 0) {
+			cv_tdm_item_used.SetInteger(6);
+		}
+
 		thread = ent->CallScriptFunctionArgs("inventoryUseKeyRelease", true, 0, "eeef", ent, this, highlightedEntity, static_cast<float>(holdTime));
 	}
 

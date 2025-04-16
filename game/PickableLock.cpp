@@ -365,6 +365,17 @@ bool PickableLock::ProcessLockpickPress(int type)
 			{
 				// Start the first sample
 				m_LockpickState = LOCKPICKING_STARTED;
+
+				cv_tdm_lockpicking.SetBool(1);
+
+				// the unarmed script is responsible for setting cv_tdm_item_used back to 0
+				if (type == 's') {
+					cv_tdm_item_used.SetInteger(7);
+				}
+				else if (type == 't') {
+					cv_tdm_item_used.SetInteger(8);
+				}
+
 				return true;
 			}
 			else
@@ -435,6 +446,16 @@ bool PickableLock::ProcessLockpickRepeat(int type)
 			// Lockpicking not yet started, start it now
 			if (CheckLockpickType(type))
 			{
+				cv_tdm_lockpicking.SetBool(1);
+
+				// the unarmed script is responsible for setting cv_tdm_item_used back to 0
+				if (type == 's') {
+					cv_tdm_item_used.SetInteger(7);
+				}
+				else if (type == 't') {
+					cv_tdm_item_used.SetInteger(8);
+				}
+
 				// Start the first sample
 				m_LockpickState = LOCKPICKING_STARTED;
 				m_FailedLockpickRounds = 0;
@@ -567,6 +588,8 @@ bool PickableLock::ProcessLockpickRepeat(int type)
 
 bool PickableLock::ProcessLockpickRelease(int type)
 {
+	cv_tdm_item_used.SetInteger(0);
+
 	if (cv_lp_debug_hud.GetBool())
 	{
 		idPlayer* player = gameLocal.GetLocalPlayer();
